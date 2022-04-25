@@ -78,12 +78,10 @@ void *mm_malloc(size_t size) {
 void *mm_heapCheck(size_t size) {
   
   void *bp;
-	
+
+    
   for (bp = free_listp; GET_ALLOC(HDRP(bp)) == 0; bp = NEXT_FREE(bp)) {
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
-	    printf("%p\n",bp);
-    }
-    if (size <= GET_SIZE(HDRP(bp))) {
+	    printf("%p\n",GET_SIZE(HDRP(bp)));
             return bp;
   }
   return NULL;
