@@ -31,12 +31,13 @@
 static void *extend_heap(size_t words);
 static void *find_fit(size_t size);
 static void *coalesce(void *bp);
-static void place(void *bp, size_t asize);
 static void remove_freeblock(void *bp);
+static void place(void *bp, size_t asize);
 
 static char *heap_listp = 0;  /* Points to the start of the heap */
 static char *free_listp = 0;  /* Poitns to the frist free block */
 
+//mm_init start
 int mm_init(void) {
   if ((heap_listp = mem_sbrk(INITSIZE + MINBLOCKSIZE)) == (void *)-1)
       return -1;
@@ -49,7 +50,9 @@ int mm_init(void) {
 
   return 0;
 }
+//mm_init end
 
+//mm_malloc start
 void *mm_malloc(size_t size) {
 
   if (size == 0)
@@ -74,19 +77,23 @@ void *mm_malloc(size_t size) {
 
   return bp;
 }
+//mm_malloc end
 
+//mm_heapCheck start
 void *mm_heapCheck(size_t size) {
   
   void *bp;
 
     
   for (bp = free_listp; GET_ALLOC(HDRP(bp)) == 0; bp = NEXT_FREE(bp)) {
-	    printf("%p\n",GET_SIZE(HDRP(bp)));
+	    printf("%ld\n",GET_SIZE(HDRP(bp)));
             return bp;
   }
   return NULL;
 }
+//mm_heapCheck end
 
+//extend_heap start
 static void *extend_heap(size_t words) {
   char *bp;
   size_t asize;
@@ -104,7 +111,9 @@ static void *extend_heap(size_t words) {
 
   return coalesce(bp);
 }
+//extend_heap end
 
+//find_fit start
 static void *find_fit(size_t size) {
   void *bp;
 
@@ -114,7 +123,46 @@ static void *find_fit(size_t size) {
   }
   return NULL;
 }
+//find_fit end
 
+//remove_freeblock start
+static void remove_freeblock(void *bp) {
+  if(bp) {
+    if (PREV_FREE(bp))
+      NEXT_FREE(PREV_FREE(bp)) = NEXT_FREE(bp);
+    else
+      free_listp = NEXT_FREE(bp);
+    if(NEXT_FREE(bp) != NULL)
+      PREV_FREE(NEXT_FREE(bp)) = PREV_FREE(bp);
+  }
+}
+//remove_freeblock end
+
+//place start
+static void place(void *bp, size_t asize) {  
+  size_t fsize = GET_SIZE(HDRP(bp));
+
+  if((fsize - asize) >= (MINBLOCKSIZE)) {
+
+    PUT(HDRP(bp), PACK(asize, 1));
+    PUT(FTRP(bp), PACK(asize, 1));
+    remove_freeblock(bp);
+    bp = NEXT_BLKP(bp);
+    PUT(HDRP(bp), PACK(fsize-asize, 0));
+    PUT(FTRP(bp), PACK(fsize-asize, 0));
+    coalesce(bp);
+  }
+
+  else {
+
+    PUT(HDRP(bp), PACK(fsize, 1));
+    PUT(FTRP(bp), PACK(fsize, 1));
+    remove_freeblock(bp);
+  }
+}
+//place end
+
+//coalesce start
 static void *coalesce(void *bp) {
   size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp))) || PREV_BLKP(bp) == bp;
   size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
@@ -153,24 +201,28 @@ static void *coalesce(void *bp) {
 
   return bp;
 }
+//coalesce end
 
-  size_t fsize = GET_SIZE(HDRP(bp));
+//free start
+void mm_free(void *bp)
+{ 
+  
+  if (!bp)
+      return;
 
-  if((fsize - asize) >= (MINBLOCKSIZE)) {
+  size_t size = GET_SIZE(HDRP(bp));
 
-    PUT(HDRP(bp), PACK(asize, 1));
-    PUT(FTRP(bp), PACK(asize, 1));
-    remove_freeblock(bp);
-    bp = NEXT_BLKP(bp);
-    PUT(HDRP(bp), PACK(fsize-asize, 0));
-    PUT(FTRP(bp), PACK(fsize-asize, 0));
-    coalesce(bp);
-  }
+  PUT(HDRP(bp), PACK(size, 0));
+  PUT(FTRP(bp), PACK(size, 0));
 
-  else {
-
-    PUT(HDRP(bp), PACK(fsize, 1));
-    PUT(FTRP(bp), PACK(fsize, 1));
-    remove_freeblock(bp);
-  }
+  coalesce(bp);
 }
+//free end
+
+//main method start
+int main(int argc, char *argv[]) {
+
+	
+
+}
+//main method end
